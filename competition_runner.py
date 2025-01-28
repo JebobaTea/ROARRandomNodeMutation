@@ -252,7 +252,7 @@ async def main():
     world.set_control_steps(0.05, 0.005)
     world.set_asynchronous(False)
     best = DumbMutationModel()
-    n = np.load("modelbest_0_b.npz")
+    n = np.load("b.npz")
     best.w1 = n['arr_0']
     best.w2 = n['arr_1']
     best.w3 = n['arr_2']
@@ -267,7 +267,7 @@ async def main():
         for k in range(pop):
             if (i != -1):
                 m = DumbMutationModel(False, best.w1, best.w2, best.w3, best.b1, best.b2, best.b3)
-                await m.mutate_all_nodes(0.3)
+                await m.mutate_all_nodes(0.2)
             else:
                 m = DumbMutationModel()
             models.append(m)
@@ -279,9 +279,12 @@ async def main():
                 enable_visualization=False,
                 model=m
             )
-            fitness.append(math.pow((2771 - result["distance"])/2770, 3) * (result["elapsed_time"] ** 2))
             print(f"gen {i} member {k} got to {result['distance']} in {result['elapsed_time']}s")
-            np.savez(f"backups/it_c_gen_{i}_no_{k}_t_{result['elapsed_time']}s_d_{result['distance']}.npz", best.w1, best.w2, best.w3, best.b1, best.b2, best.b3)
+            if (result['elapsed_time'] < 399):
+                fitness.append(math.pow((2771 - result["distance"])/2770, 3) * (result["elapsed_time"] ** 2))
+                np.savez(f"backups/it_d_gen_{i}_no_{k}_t_{result['elapsed_time']}s_d_{result['distance']}.npz", best.w1, best.w2, best.w3, best.b1, best.b2, best.b3)
+            else:
+                models.remove(m)
         b = fitness.index(min(fitness))
         print(f"best fitness for this generation: {fitness[b]}")
         best = models[b]
