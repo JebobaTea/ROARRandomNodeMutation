@@ -1,5 +1,4 @@
 import math
-
 import roar_py_interface
 import roar_py_carla
 from submission import RoarCompetitionSolution
@@ -161,7 +160,6 @@ async def evaluate_solution(
     assert occupancy_map_sensor is not None
     assert collision_sensor is not None
 
-
     # Start to run solution 
     solution : RoarCompetitionSolution = solution_constructor(
         waypoints,
@@ -252,13 +250,13 @@ async def main():
     world.set_control_steps(0.05, 0.005)
     world.set_asynchronous(False)
     best = DumbMutationModel()
-    n = np.load("b.npz")
-    best.w1 = n['arr_0']
-    best.w2 = n['arr_1']
-    best.w3 = n['arr_2']
-    best.b1 = n['arr_3']
-    best.b2 = n['arr_4']
-    best.b3 = n['arr_5']
+    #n = np.load("b.npz")
+    #best.w1 = n['arr_0']
+    #best.w2 = n['arr_1']
+    #best.w3 = n['arr_2']
+    #best.b1 = n['arr_3']
+    #best.b2 = n['arr_4']
+    #best.b3 = n['arr_5']
     gens = 5
     for i in range(gens):
         models = []
