@@ -1,9 +1,4 @@
-"""
-Competition instructions:
-Please do not change anything else but fill out the to-do sections.
-"""
 import math
-
 import roar_py_interface
 import numpy as np
 import os
@@ -128,7 +123,6 @@ class RoarCompetitionSolution:
         vehicle_velocity = self.velocity_sensor.get_last_gym_observation()
         self.maneuverable_waypoints = (
             roar_py_interface.RoarPyWaypoint.load_waypoint_list(
-                # waypoints9 best
                 np.load(f"{os.path.dirname(__file__)}\\test.npz")
             )
         )
@@ -144,13 +138,11 @@ class RoarCompetitionSolution:
     async def step(
         self
     ) -> None:
-        # Obtain vehicle data
         vehicle_location = self.location_sensor.get_last_gym_observation()
         vehicle_rotation = self.rpy_sensor.get_last_gym_observation()
         vehicle_velocity = self.velocity_sensor.get_last_gym_observation()
         vehicle_speed = np.linalg.norm(vehicle_velocity) * 3.6
 
-        # Get nearest waypoint and determine target waypoints
         self.current_waypoint_idx = filter_waypoints(
             vehicle_location, self.current_waypoint_idx, self.maneuverable_waypoints
         )
@@ -163,7 +155,6 @@ class RoarCompetitionSolution:
         lookahead = self.lat_pid_controller.get_waypoint_at_offset(self.maneuverable_waypoints,
                                                                    self.current_waypoint_idx, int(vehicle_speed / self.coeff))
 
-        # Steering control
         steer_control = self.lat_pid_controller.run_in_series(
             vehicle_location, vehicle_rotation, vehicle_speed, waypoint_to_follow
         )
@@ -180,19 +171,13 @@ class RoarCompetitionSolution:
         ])
         model_output = await self.model.feed_forward(model_input)
 
-        # Dynamic throttle and brake control
         throttle = abs(model_output.item(0))
         self.coeff = model_output.item(1)*10
         brake = abs(model_output.item(2))
 
         if (vehicle_speed < 60):
             brake = 0
-
-        # Logging for debugging
-        #os.system("cls")
-        #print(f"Brake: {brake:.2f}, Throttle: {throttle:.2f}, Speed: {vehicle_speed:.2f}")
-
-        # Apply vehicle controls
+        
         control = {
             "throttle": np.clip(throttle, 0.0, 1.0),
             "steer": np.clip(steer_control, -1.0, 1.0),
