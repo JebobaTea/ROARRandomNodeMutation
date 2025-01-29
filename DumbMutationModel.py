@@ -36,8 +36,10 @@ class DumbMutationModel:
         self.w2, self.b2 = await mutate_random_nodes(self.w2, self.b2, prob)
         self.w3, self.b3 = await mutate_random_nodes(self.w3, self.b3, prob)
 
+
 async def sigmoid(matrix):
         return 1 / (1 + np.exp(-1 * matrix))
+
 async def mutate_random_nodes(weights, biases, chance):
     for index, node in enumerate(weights):
         if (random.random() < chance):
