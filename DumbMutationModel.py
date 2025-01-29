@@ -18,6 +18,7 @@ class DumbMutationModel:
             self.b1 = b1
             self.b2 = b2
             self.b3 = b3
+
     async def feed_forward(self, A0):
         A0 = A0.T
         layer_1_raw = self.w1 @ A0 + self.b1
