@@ -45,7 +45,9 @@ class RoarCompetitionSolution:
         self.lat_pid_controller = LatPIDController(config=self.get_lateral_pid_config())
         self.model = model
         self.coeff = 1
-
+        
+    # Modify PID equation coefficients depending on speed
+    # Refer to chart on the slides for the effects of raising/lowering each individual parameter
     def get_lateral_pid_config(self):
         conf = {
             "60": {
@@ -134,18 +136,25 @@ class RoarCompetitionSolution:
             self.maneuverable_waypoints
         )
 
-
+    # Called continuously during simulation (basically like a gameloop)
     async def step(
         self
     ) -> None:
+        # Receive location, rotation and velocity data
         vehicle_location = self.location_sensor.get_last_gym_observation()
         vehicle_rotation = self.rpy_sensor.get_last_gym_observation()
         vehicle_velocity = self.velocity_sensor.get_last_gym_observation()
         vehicle_speed = np.linalg.norm(vehicle_velocity) * 3.6
 
+         # Find the waypoint closest to the vehicle
         self.current_waypoint_idx = filter_waypoints(
             vehicle_location, self.current_waypoint_idx, self.maneuverable_waypoints
         )
+        # Steering control is always determined by the waypoint 3 ahead of the current waypoint
+        # In a PID implementation, we determine when we slow down in anticipation of a turn, we select a waypoint ___ indices ahead of the current waypoint depending on the speed
+        # The lookahead variable refers to the waypoint in question
+        # To get a reference to a waypoint 20 waypoints ahead of the current waypoint, for example, use 
+        #   waypoint_20_ahead = self.lat_pid_controller.get_waypoint_at_offset(self.maneuverable_waypoints, self.current_waypoint_idx, 20)
         waypoint_to_follow = self.lat_pid_controller.get_waypoint_at_offset(self.maneuverable_waypoints,
                                                                             self.current_waypoint_idx, 3)
         far_waypoint = self.lat_pid_controller.get_waypoint_at_offset(self.maneuverable_waypoints,
@@ -155,6 +164,7 @@ class RoarCompetitionSolution:
         lookahead = self.lat_pid_controller.get_waypoint_at_offset(self.maneuverable_waypoints,
                                                                    self.current_waypoint_idx, int(vehicle_speed / self.coeff))
 
+        # Here, in this example model, we actually calculate multiple error values for multiple offsets to give our model more data to work with
         steer_control = self.lat_pid_controller.run_in_series(
             vehicle_location, vehicle_rotation, vehicle_speed, waypoint_to_follow
         )
@@ -171,10 +181,12 @@ class RoarCompetitionSolution:
         ])
         model_output = await self.model.feed_forward(model_input)
 
+        # Apply outputs from feedforward results
         throttle = abs(model_output.item(0))
         self.coeff = model_output.item(1)*10
         brake = abs(model_output.item(2))
 
+        # Override brake outputs of the model if speed is low, otherwise it will fail to accelerate from a dead stop
         if (vehicle_speed < 60):
             brake = 0
         
